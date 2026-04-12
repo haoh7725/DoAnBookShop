@@ -22,7 +22,7 @@ public class SecurityConfig {
                         .requestMatchers("/register", "/login", "/books", "/books/**",
                                 "/uploads/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()  // /cart, /checkout, /orders đều cần login
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

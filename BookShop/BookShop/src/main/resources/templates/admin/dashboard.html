@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+    <h1 class="font-serif fw-bold text-brand fs-3 mb-4">Bảng điều khiển</h1>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3">
+                <p class="text-muted small mb-1">Doanh thu (Hoàn thành)</p>
+                <p class="fs-4 fw-bold text-brand mb-0"
+                   th:text="${#numbers.formatInteger(totalRevenue,0,'COMMA') + 'đ'}"></p>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3">
+                <p class="text-muted small mb-1">Đơn chờ xác nhận</p>
+                <p class="fs-4 fw-bold text-brand mb-0" th:text="${pendingOrders}"></p>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3">
+                <p class="text-muted small mb-1">Khách hàng</p>
+                <p class="fs-4 fw-bold text-brand mb-0" th:text="${totalUsers}"></p>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3">
+                <p class="text-muted small mb-1">Đầu sách</p>
+                <p class="fs-4 fw-bold text-brand mb-0" th:text="${totalBooks}"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Đơn hàng gần đây -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h6 class="font-serif fw-bold text-brand mb-0">Đơn hàng gần đây</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Mã</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng</th>
+                            <th>Trạng thái</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${recentOrders}">
+                            <td class="small">#<span th:text="${order.id}"></span></td>
+                            <td class="small" th:text="${order.user.fullName ?: order.user.username}"></td>
+                            <td class="small fw-medium"
+                                th:text="${#numbers.formatInteger(order.totalPrice,0,'COMMA') + 'đ'}"></td>
+                            <td>
+                  <span th:switch="${order.status.name()}">
+                    <span th:case="'PENDING'"   class="badge text-bg-warning">Chờ xác nhận</span>
+                    <span th:case="'CONFIRMED'" class="badge text-bg-info">Đã xác nhận</span>
+                    <span th:case="'SHIPPING'"  class="badge text-bg-primary">Đang giao</span>
+                    <span th:case="'COMPLETED'" class="badge text-bg-success">Hoàn thành</span>
+                    <span th:case="'CANCELLED'" class="badge text-bg-secondary">Đã hủy</span>
+                  </span>
+                            </td>
+                            <td>
+                                <a th:href="@{/admin/orders/{id}(id=${order.id})}"
+                                   class="btn btn-sm btn-outline-secondary">Xem</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sách sắp hết hàng -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h6 class="font-serif fw-bold text-brand mb-0">
+                        Sắp hết hàng
+                        <span th:if="${!#lists.isEmpty(lowStockBooks)}"
+                              class="badge text-bg-danger ms-1"
+                              th:text="${#lists.size(lowStockBooks)}"></span>
+                    </h6>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li th:each="book : ${lowStockBooks}"
+                        class="list-group-item d-flex justify-content-between align-items-center small">
+                        <span class="text-truncate me-2" th:text="${book.title}"></span>
+                        <span class="badge text-bg-warning flex-shrink-0"
+                              th:text="'Còn ' + ${book.stock}"></span>
+                    </li>
+                    <li th:if="${#lists.isEmpty(lowStockBooks)}"
+                        class="list-group-item text-muted small text-center py-3">
+                        Tất cả sản phẩm còn hàng tốt.
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Links nhanh -->
+            <div class="card border-0 shadow-sm mt-3 p-3">
+                <h6 class="font-serif fw-bold text-brand mb-3">Quản lý nhanh</h6>
+                <div class="d-grid gap-2">
+                    <a th:href="@{/admin/books}"      class="btn btn-outline-secondary btn-sm text-start">
+                        <i class="bi bi-book me-2"></i>Quản lý sách
+                    </a>
+                    <a th:href="@{/admin/categories}" class="btn btn-outline-secondary btn-sm text-start">
+                        <i class="bi bi-tags me-2"></i>Quản lý danh mục
+                    </a>
+                    <a th:href="@{/admin/orders}"     class="btn btn-outline-secondary btn-sm text-start">
+                        <i class="bi bi-receipt me-2"></i>Quản lý đơn hàng
+                    </a>
+                    <a th:href="@{/admin/users}"      class="btn btn-outline-secondary btn-sm text-start">
+                        <i class="bi bi-people me-2"></i>Quản lý người dùng
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

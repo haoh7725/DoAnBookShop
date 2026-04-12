@@ -12,6 +12,8 @@ import java.util.List;
 public interface BookRepository extends JpaRepository<Book, Long> {
 
     List<Book> findByTitleContaining(String keyword);
+    // Thêm dòng này vào BookRepository
+    List<Book> findByStockLessThan(int stock);
 
     List<Book> findByCategoryId(Long categoryId);
 

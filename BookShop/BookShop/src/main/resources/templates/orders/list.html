@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đơn hàng của tôi')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+    <h1 class="font-serif fw-bold text-brand fs-3 mb-4">Đơn hàng của tôi</h1>
+
+    <div th:if="${successMsg}" class="alert alert-success" th:text="${successMsg}"></div>
+
+    <div th:if="${#lists.isEmpty(orders)}" class="text-center py-5">
+        <i class="bi bi-receipt text-muted" style="font-size:56px"></i>
+        <p class="text-muted mt-3">Bạn chưa có đơn hàng nào.</p>
+        <a th:href="@{/books}" class="btn btn-brand mt-2">Mua sắm ngay</a>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(orders)}" class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td class="fw-medium">#<span th:text="${order.id}"></span></td>
+                    <td class="text-muted small"
+                        th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td class="fw-medium text-brand"
+                        th:text="${#numbers.formatInteger(order.totalPrice,0,'COMMA') + 'đ'}"></td>
+                    <td>
+              <span th:switch="${order.status.name()}">
+                <span th:case="'PENDING'"   class="badge text-bg-warning">Chờ xác nhận</span>
+                <span th:case="'CONFIRMED'" class="badge text-bg-info">Đã xác nhận</span>
+                <span th:case="'SHIPPING'"  class="badge text-bg-primary">Đang giao</span>
+                <span th:case="'COMPLETED'" class="badge text-bg-success">Hoàn thành</span>
+                <span th:case="'CANCELLED'" class="badge text-bg-secondary">Đã hủy</span>
+              </span>
+                    </td>
+                    <td>
+                        <a th:href="@{/orders/{id}(id=${order.id})}"
+                           class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

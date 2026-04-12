@@ -1,51 +1,94 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Form sách</title></head>
+<head th:replace="~{fragments/layout :: head(${book.id == null ? 'Thêm sách' : 'Sửa sách'})}"></head>
 <body>
-<h1 th:text="${book.id == null ? 'Thêm sách mới' : 'Sửa sách'}"></h1>
-<a href="/admin/books">← Quay lại</a>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-<form th:action="${book.id == null ? '/admin/books/add' : '/admin/books/edit/' + book.id}"
-      th:object="${book}" method="post" enctype="multipart/form-data">
+<main class="container py-5" style="max-width:720px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/admin/books}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="font-serif fw-bold text-brand fs-3 mb-0"
+            th:text="${book.id == null ? 'Thêm sách mới' : 'Sửa sách'}"></h1>
+    </div>
 
-    <label>Tên sách:</label>
-    <input type="text" th:field="*{title}" required/><br/>
+    <div class="card border-0 shadow-sm p-4">
+        <form th:action="${book.id == null ? '/admin/books/add' : '/admin/books/edit/' + book.id}"
+              th:object="${book}" method="post" enctype="multipart/form-data">
 
-    <label>Tác giả:</label>
-    <input type="text" th:field="*{author}"/><br/>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label small fw-medium">Tên sách <span class="text-danger">*</span></label>
+                    <input type="text" th:field="*{title}" class="form-control" required/>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">Thể loại</label>
+                    <select th:field="*{category}" class="form-select">
+                        <option value="">-- Chọn thể loại --</option>
+                        <option th:each="cat : ${categories}"
+                                th:value="${cat.id}"
+                                th:text="${cat.name}"></option>
+                    </select>
+                </div>
 
-    <label>NXB:</label>
-    <input type="text" th:field="*{publisher}"/><br/>
+                <div class="col-md-6">
+                    <label class="form-label small fw-medium">Tác giả</label>
+                    <input type="text" th:field="*{author}" class="form-control"/>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">NXB</label>
+                    <input type="text" th:field="*{publisher}" class="form-control"/>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-medium">Năm XB</label>
+                    <input type="number" th:field="*{publishYear}" class="form-control"/>
+                </div>
 
-    <label>Năm xuất bản:</label>
-    <input type="number" th:field="*{publishYear}"/><br/>
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">Giá <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="number" th:field="*{price}" class="form-control" required/>
+                        <span class="input-group-text">đ</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">Giá khuyến mãi</label>
+                    <div class="input-group">
+                        <input type="number" th:field="*{salePrice}" class="form-control"/>
+                        <span class="input-group-text">đ</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">Tồn kho</label>
+                    <input type="number" th:field="*{stock}" class="form-control"/>
+                </div>
 
-    <label>Giá:</label>
-    <input type="number" th:field="*{price}" required/><br/>
+                <div class="col-12">
+                    <label class="form-label small fw-medium">Mô tả</label>
+                    <textarea th:field="*{description}" class="form-control" rows="4"></textarea>
+                </div>
 
-    <label>Giá khuyến mãi (0 = không giảm):</label>
-    <input type="number" th:field="*{salePrice}"/><br/>
+                <div class="col-12">
+                    <label class="form-label small fw-medium">Ảnh bìa</label>
+                    <input type="file" name="imageFile" class="form-control" accept="image/*"/>
+                    <div th:if="${book.imagePath != null}" class="mt-2">
+                        <img th:src="${book.imagePath}" class="rounded" style="height:100px;object-fit:cover"/>
+                        <p class="text-muted small mt-1">Ảnh hiện tại — để trống nếu không muốn thay</p>
+                    </div>
+                </div>
+            </div>
 
-    <label>Tồn kho:</label>
-    <input type="number" th:field="*{stock}"/><br/>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-brand px-4">
+                    <i class="bi bi-floppy me-1"></i>Lưu
+                </button>
+                <a th:href="@{/admin/books}" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</main>
 
-    <label>Thể loại:</label>
-    <select th:field="*{category}">
-        <option th:each="cat : ${categories}"
-                th:value="${cat.id}"
-                th:text="${cat.name}">
-        </option>
-    </select><br/>
-
-    <label>Mô tả:</label>
-    <textarea th:field="*{description}" rows="4"></textarea><br/>
-
-    <label>Ảnh bìa:</label>
-    <input type="file" name="imageFile" accept="image/*"/><br/>
-    <img th:if="${book.imagePath != null}"
-         th:src="${book.imagePath}" width="100"/><br/>
-
-    <button type="submit">💾 Lưu</button>
-</form>
+<div th:replace="~{fragments/layout :: footer}"></div>
 </body>
 </html>

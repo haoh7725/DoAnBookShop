@@ -3,6 +3,7 @@
   <component name="AdditionalModuleElements">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/BookShop/src/main/resources/static/js" />
+      <excludeFolder url="file://$MODULE_DIR$/BookShop/src/main/resources/templates/admin/books" />
     </content>
   </component>
 </module>

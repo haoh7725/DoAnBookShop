@@ -1,32 +1,41 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Đăng nhập</title></head>
+<head th:replace="~{fragments/layout :: head('Đăng nhập')}"></head>
 <body>
-<h1>🔐 Đăng nhập</h1>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-<!-- Thông báo đăng ký thành công -->
-<p th:if="${param.registered}" style="color:green">
-    Đăng ký thành công! Hãy đăng nhập.
-</p>
+<main class="container py-5" style="max-width:440px">
+    <div class="card border-0 shadow-sm p-4 p-md-5">
+        <h1 class="font-serif fw-bold text-brand fs-3 mb-4 text-center">Đăng nhập</h1>
 
-<!-- Thông báo sai mật khẩu -->
-<p th:if="${param.error}" style="color:red">
-    Sai tên đăng nhập hoặc mật khẩu!
-</p>
+        <div th:if="${param.registered}" class="alert alert-success py-2 small">
+            Đăng ký thành công! Hãy đăng nhập.
+        </div>
+        <div th:if="${param.error}" class="alert alert-danger py-2 small">
+            Sai tên đăng nhập hoặc mật khẩu!
+        </div>
 
-<form action="/login" method="post">
-    <input type="hidden" th:name="${_csrf.parameterName}"
-           th:value="${_csrf.token}"/>
+        <form action="/login" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-    <label>Tên đăng nhập:</label>
-    <input type="text" name="username" required/><br/>
+            <div class="mb-3">
+                <label class="form-label small fw-medium">Tên đăng nhập</label>
+                <input type="text" name="username" class="form-control" required autofocus/>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-medium">Mật khẩu</label>
+                <input type="password" name="password" class="form-control" required/>
+            </div>
 
-    <label>Mật khẩu:</label>
-    <input type="password" name="password" required/><br/>
+            <button type="submit" class="btn btn-brand w-100">Đăng nhập</button>
+        </form>
 
-    <button type="submit">Đăng nhập</button>
-</form>
+        <p class="text-center small text-muted mt-3 mb-0">
+            Chưa có tài khoản? <a th:href="@{/register}" class="text-accent fw-medium">Đăng ký ngay</a>
+        </p>
+    </div>
+</main>
 
-<a href="/register">Chưa có tài khoản? Đăng ký ngay</a>
+<div th:replace="~{fragments/layout :: footer}"></div>
 </body>
 </html>
