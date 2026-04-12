@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<head th:replace="~{fragments/layout :: head('Trang chủ')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main>
+
+  <!-- HERO -->
+  <section class="bg-brand text-white py-5">
+    <div class="container py-4">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+          <p class="text-uppercase small fw-semibold mb-2" style="color:var(--accent);letter-spacing:2px">Khám phá tri thức</p>
+          <h1 class="font-serif display-4 fw-bold lh-sm mb-3">
+            Mỗi cuốn sách<br/><em class="fst-italic" style="color:#F5C99A">là một thế giới</em>
+          </h1>
+          <p class="text-white-50 mb-4" style="max-width:420px">
+            Hàng nghìn đầu sách từ văn học, khoa học đến self-help. Giao hàng nhanh, giá tốt, đổi trả dễ dàng.
+          </p>
+          <div class="d-flex gap-2 flex-wrap mb-5">
+            <a th:href="@{/books}" class="btn btn-accent btn-lg px-4">
+              <i class="bi bi-grid me-2"></i>Khám phá ngay
+            </a>
+            <a th:href="@{/books(sort=popular)}" class="btn btn-outline-light btn-lg px-4">
+              Sách bán chạy
+            </a>
+          </div>
+          <div class="d-flex gap-4">
+            <div>
+              <div class="fs-4 fw-bold font-serif">5,000+</div>
+              <div class="text-white-50 small">Đầu sách</div>
+            </div>
+            <div class="border-start border-white border-opacity-25 ps-4">
+              <div class="fs-4 fw-bold font-serif">50+</div>
+              <div class="text-white-50 small">Thể loại</div>
+            </div>
+            <div class="border-start border-white border-opacity-25 ps-4">
+              <div class="fs-4 fw-bold font-serif">10K+</div>
+              <div class="text-white-50 small">Khách hàng</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 text-center d-none d-lg-block">
+          <i class="bi bi-book-half" style="font-size:180px;color:rgba(200,119,58,0.35)"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="py-5">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-baseline mb-4">
+        <h2 class="font-serif fw-bold text-brand fs-3 mb-0">Thể loại nổi bật</h2>
+        <a th:href="@{/books}" class="text-decoration-none small fw-medium text-accent">Xem tất cả →</a>
+      </div>
+      <div class="row g-3">
+        <div th:each="cat : ${categories}" class="col-6 col-sm-4 col-md-3 col-lg-2">
+          <a th:href="@{/books(categoryId=${cat.id})}"
+             class="card text-center border-0 shadow-sm text-decoration-none h-100 py-3 px-2"
+             style="background:#fff;transition:all .2s"
+             onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,.12)'"
+             onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <i class="bi bi-book fs-2 text-accent mb-2"></i>
+            <p class="mb-0 small fw-medium text-brand" th:text="${cat.name}">Thể loại</p>
+          </a>
+        </div>
+        <div th:if="${#lists.isEmpty(categories)}" class="col-12">
+          <p class="text-muted">Chưa có thể loại nào.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SÁCH MỚI NHẤT -->
+  <section class="py-4" style="background:#F0EAE0">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-baseline mb-4">
+        <h2 class="font-serif fw-bold text-brand fs-3 mb-0">Sách mới nhất</h2>
+        <a th:href="@{/books(sort=newest)}" class="text-decoration-none small fw-medium text-accent">Xem tất cả →</a>
+      </div>
+      <div class="row g-3">
+        <div th:each="book : ${newestBooks}" class="col-6 col-sm-4 col-md-3 col-xl-2">
+          <div class="card h-100 border-0 shadow-sm" style="transition:all .2s"
+               onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.13)'"
+               onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <a th:href="@{/books/{id}(id=${book.id})}" class="position-relative d-block overflow-hidden"
+               style="padding-top:140%">
+              <img th:if="${book.imagePath != null}"
+                   th:src="${book.imagePath}" th:alt="${book.title}"
+                   class="position-absolute top-0 start-0 w-100 h-100"
+                   style="object-fit:cover"
+                   onerror="this.parentElement.innerHTML='<div class=\'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light\'><i class=\'bi bi-book text-muted\' style=\'font-size:48px\'></i></div>'"/>
+              <div th:if="${book.imagePath == null}"
+                   class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light">
+                <i class="bi bi-book text-muted" style="font-size:48px"></i>
+              </div>
+              <span th:if="${book.salePrice > 0}"
+                    class="badge position-absolute top-0 start-0 m-2"
+                    style="background:var(--accent)">SALE</span>
+            </a>
+            <div class="card-body p-2 d-flex flex-column">
+              <p class="text-accent small mb-1 text-uppercase fw-semibold"
+                 style="font-size:10px;letter-spacing:.5px"
+                 th:text="${book.category != null ? book.category.name : ''}"></p>
+              <h6 class="font-serif fw-semibold mb-1 text-brand" style="font-size:13px;line-height:1.3">
+                <a th:href="@{/books/{id}(id=${book.id})}" th:text="${book.title}"
+                   class="text-decoration-none text-brand stretched-link-not"></a>
+              </h6>
+              <p class="text-muted mb-2" style="font-size:11px" th:text="${book.author}"></p>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="fw-bold text-brand" style="font-size:14px"
+                                      th:text="${book.salePrice > 0 ?
+                                        #numbers.formatInteger(book.salePrice,0,'COMMA') + 'đ' :
+                                        #numbers.formatInteger(book.price,0,'COMMA') + 'đ'}">
+                                </span>
+                <span th:if="${book.salePrice > 0}"
+                      class="text-muted text-decoration-line-through" style="font-size:11px"
+                      th:text="${#numbers.formatInteger(book.price,0,'COMMA') + 'đ'}">
+                                </span>
+              </div>
+              <button class="btn btn-brand btn-sm mt-auto w-100 btn-add-cart"
+                      th:data-id="${book.id}"
+                      th:disabled="${book.stock == 0}"
+                      style="font-size:12px">
+                <i class="bi bi-cart-plus me-1"></i>
+                <span th:text="${book.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div th:if="${#lists.isEmpty(newestBooks)}" class="col-12">
+          <p class="text-muted">Chưa có sách nào. <a th:href="@{/admin/books/add}">Thêm sách đầu tiên</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ĐANG SALE -->
+  <section class="py-5" th:if="${!#lists.isEmpty(saleBooks)}">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-baseline mb-4">
+        <h2 class="font-serif fw-bold text-brand fs-3 mb-0">🔥 Đang giảm giá</h2>
+        <a th:href="@{/books(sort=sale)}" class="text-decoration-none small fw-medium text-accent">Xem tất cả →</a>
+      </div>
+      <div class="row g-3">
+        <div th:each="book : ${saleBooks}" class="col-6 col-sm-4 col-md-3">
+          <div class="card h-100 border-0 shadow-sm" style="transition:all .2s"
+               onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.13)'"
+               onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <a th:href="@{/books/{id}(id=${book.id})}" class="position-relative d-block overflow-hidden"
+               style="padding-top:140%">
+              <img th:if="${book.imagePath != null}"
+                   th:src="${book.imagePath}" th:alt="${book.title}"
+                   class="position-absolute top-0 start-0 w-100 h-100"
+                   style="object-fit:cover"/>
+              <div th:if="${book.imagePath == null}"
+                   class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light">
+                <i class="bi bi-book text-muted" style="font-size:48px"></i>
+              </div>
+              <span class="badge position-absolute top-0 start-0 m-2"
+                    style="background:var(--accent)">SALE</span>
+            </a>
+            <div class="card-body p-2 d-flex flex-column">
+              <h6 class="font-serif fw-semibold mb-1 text-brand" style="font-size:13px">
+                <a th:href="@{/books/{id}(id=${book.id})}" th:text="${book.title}"
+                   class="text-decoration-none text-brand"></a>
+              </h6>
+              <p class="text-muted mb-2" style="font-size:11px" th:text="${book.author}"></p>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="fw-bold text-brand"
+                                      th:text="${#numbers.formatInteger(book.salePrice,0,'COMMA') + 'đ'}"></span>
+                <span class="text-muted text-decoration-line-through small"
+                      th:text="${#numbers.formatInteger(book.price,0,'COMMA') + 'đ'}"></span>
+              </div>
+              <button class="btn btn-brand btn-sm mt-auto w-100 btn-add-cart"
+                      th:data-id="${book.id}" style="font-size:12px">
+                <i class="bi bi-cart-plus me-1"></i>Thêm vào giỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANNER CTA -->
+  <section class="py-5">
+    <div class="container">
+      <div class="rounded-4 p-5 text-white d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 bg-brand"
+           style="background-image:radial-gradient(circle at 90% 50%, rgba(200,119,58,.25), transparent 60%)">
+        <div>
+          <h3 class="font-serif fw-bold mb-1">Đăng ký ngay — Nhận ưu đãi đặc biệt</h3>
+          <p class="text-white-50 mb-0">Thành viên mới được giảm 10% cho đơn hàng đầu tiên</p>
+        </div>
+        <a th:href="@{/register}" class="btn btn-light btn-lg px-4 fw-medium flex-shrink-0">
+          Tạo tài khoản miễn phí
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
