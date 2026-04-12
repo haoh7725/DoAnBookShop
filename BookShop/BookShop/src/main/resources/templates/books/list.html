@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Nhà Sách</title>
+</head>
+<body>
+<h1>📚 Danh sách sách</h1>
+
+<!-- Tìm kiếm -->
+<form action="/books/search" method="get">
+    <input type="text" name="keyword" placeholder="Tìm sách..."/>
+    <button type="submit">🔍 Tìm</button>
+</form>
+
+<!-- Danh sách sách -->
+<div>
+    <div th:each="book : ${books}">
+        <img th:src="${book.imagePath}" width="100"
+             onerror="this.src='/images/no-image.png'"/>
+        <h3 th:text="${book.title}"></h3>
+        <p th:text="${book.author}"></p>
+        <p>
+            <!-- Nếu có giảm giá -->
+            <span th:if="${book.salePrice > 0}"
+                  th:text="${book.salePrice} + ' đ'">
+                </span>
+            <span th:if="${book.salePrice == 0}"
+                  th:text="${book.price} + ' đ'">
+                </span>
+        </p>
+        <a th:href="@{/books/{id}(id=${book.id})}">Xem chi tiết</a>
+        <a th:href="@{/cart/add/{id}(id=${book.id})}">🛒 Thêm vào giỏ</a>
+    </div>
+</div>
+</body>
+</html>

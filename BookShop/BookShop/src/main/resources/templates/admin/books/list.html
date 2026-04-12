@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Quản lý sách</title></head>
+<body>
+<h1>📚 Quản lý sách</h1>
+<a href="/admin/books/add">➕ Thêm sách mới</a>
+
+<table border="1">
+    <tr>
+        <th>Ảnh</th>
+        <th>Tên sách</th>
+        <th>Tác giả</th>
+        <th>Giá</th>
+        <th>Tồn kho</th>
+        <th>Thao tác</th>
+    </tr>
+    <tr th:each="book : ${books}">
+        <td><img th:src="${book.imagePath}" width="60"/></td>
+        <td th:text="${book.title}"></td>
+        <td th:text="${book.author}"></td>
+        <td th:text="${book.price} + ' đ'"></td>
+        <td th:text="${book.stock}"></td>
+        <td>
+            <a th:href="@{/admin/books/edit/{id}(id=${book.id})}">✏️ Sửa</a>
+            <a th:href="@{/admin/books/delete/{id}(id=${book.id})}"
+               onclick="return confirm('Xóa sách này?')">🗑️ Xóa</a>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

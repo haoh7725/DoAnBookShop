@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${book.title}"></title>
+</head>
+<body>
+<a href="/books">← Quay lại</a>
+
+<img th:src="${book.imagePath}" width="200"/>
+<h1 th:text="${book.title}"></h1>
+<p>Tác giả: <span th:text="${book.author}"></span></p>
+<p>NXB: <span th:text="${book.publisher}"></span></p>
+<p>Năm: <span th:text="${book.publishYear}"></span></p>
+<p>Thể loại: <span th:text="${book.category.name}"></span></p>
+<p>Mô tả: <span th:text="${book.description}"></span></p>
+
+<h2>
+    <span th:if="${book.salePrice > 0}" th:text="${book.salePrice} + ' đ'"></span>
+    <span th:if="${book.salePrice == 0}" th:text="${book.price} + ' đ'"></span>
+</h2>
+<p>Còn lại: <span th:text="${book.stock}"></span> cuốn</p>
+
+<a th:href="@{/cart/add/{id}(id=${book.id})}">🛒 Thêm vào giỏ</a>
+</body>
+</html>
