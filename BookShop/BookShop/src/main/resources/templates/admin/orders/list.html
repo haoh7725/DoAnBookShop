@@ -7,7 +7,8 @@
 <main class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="font-serif fw-bold text-brand fs-3 mb-0">Quản lý đơn hàng</h1>
-        <span class="badge text-bg-secondary fs-6" th:text="${#lists.size(orders)} + ' đơn'"></span>
+        <span class="badge text-bg-secondary fs-6"
+              th:text="${#lists.size(orders)} + ' đơn'"></span>
     </div>
 
     <div th:if="${successMsg}" class="alert alert-success alert-dismissible" th:text="${successMsg}">
@@ -16,12 +17,41 @@
 
     <!-- Bộ lọc trạng thái -->
     <div class="d-flex gap-2 flex-wrap mb-3">
-        <a href="/admin/orders" class="btn btn-sm btn-outline-secondary">Tất cả</a>
-        <a href="/admin/orders?status=PENDING"   class="btn btn-sm btn-warning text-dark">Chờ xác nhận</a>
-        <a href="/admin/orders?status=CONFIRMED" class="btn btn-sm btn-info text-dark">Đã xác nhận</a>
-        <a href="/admin/orders?status=SHIPPING"  class="btn btn-sm btn-primary">Đang giao</a>
-        <a href="/admin/orders?status=COMPLETED" class="btn btn-sm btn-success">Hoàn thành</a>
-        <a href="/admin/orders?status=CANCELLED" class="btn btn-sm btn-secondary">Đã hủy</a>
+        <a href="/admin/orders"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus == null ? ' btn-brand' : ' btn-outline-secondary'}">
+            Tất cả
+        </a>
+        <a href="/admin/orders?status=PENDING"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus != null and selectedStatus.name() == 'PENDING'
+               ? ' btn-warning text-dark' : ' btn-outline-warning'}">
+            Chờ xác nhận
+        </a>
+        <a href="/admin/orders?status=CONFIRMED"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus != null and selectedStatus.name() == 'CONFIRMED'
+               ? ' btn-info text-dark' : ' btn-outline-info'}">
+            Đã xác nhận
+        </a>
+        <a href="/admin/orders?status=SHIPPING"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus != null and selectedStatus.name() == 'SHIPPING'
+               ? ' btn-primary' : ' btn-outline-primary'}">
+            Đang giao
+        </a>
+        <a href="/admin/orders?status=COMPLETED"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus != null and selectedStatus.name() == 'COMPLETED'
+               ? ' btn-success' : ' btn-outline-success'}">
+            Hoàn thành
+        </a>
+        <a href="/admin/orders?status=CANCELLED"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'
+               ? ' btn-secondary' : ' btn-outline-secondary'}">
+            Đã hủy
+        </a>
     </div>
 
     <div class="card border-0 shadow-sm">
@@ -33,6 +63,7 @@
                     <th>Khách hàng</th>
                     <th>Ngày đặt</th>
                     <th>Tổng tiền</th>
+                    <th>Giảm giá</th>
                     <th>Địa chỉ</th>
                     <th>Trạng thái</th>
                     <th style="width:90px"></th>
@@ -42,13 +73,22 @@
                 <tr th:each="order : ${orders}">
                     <td class="fw-medium">#<span th:text="${order.id}"></span></td>
                     <td>
-                        <p class="mb-0 small fw-medium" th:text="${order.user.fullName ?: order.user.username}"></p>
-                        <p class="mb-0 text-muted" style="font-size:11px" th:text="${order.user.email}"></p>
+                        <p class="mb-0 small fw-medium"
+                           th:text="${order.user.fullName ?: order.user.username}"></p>
+                        <p class="mb-0 text-muted" style="font-size:11px"
+                           th:text="${order.user.email}"></p>
                     </td>
                     <td class="text-muted small"
-                        th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}"></td>
+                        th:text="${#temporals.format(order.orderDate,'dd/MM/yyyy HH:mm')}"></td>
                     <td class="fw-medium text-brand"
                         th:text="${#numbers.formatInteger(order.totalPrice,0,'COMMA') + 'đ'}"></td>
+                    <td>
+                        <span th:if="${order.discount > 0}"
+                              class="badge text-bg-success"
+                              th:text="${'-' + #numbers.formatInteger(order.discount,0,'COMMA') + 'đ'}">
+                        </span>
+                        <span th:if="${order.discount == 0}" class="text-muted small">—</span>
+                    </td>
                     <td class="text-muted small"
                         style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
                         th:text="${order.address}"></td>
@@ -69,7 +109,9 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(orders)}">
-                    <td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        Không có đơn hàng nào.
+                    </td>
                 </tr>
                 </tbody>
             </table>

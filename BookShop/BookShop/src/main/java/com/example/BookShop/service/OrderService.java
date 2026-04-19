@@ -10,33 +10,57 @@ import java.util.List;
 @Service
 public class OrderService {
 
-    private final OrderRepository orderRepo;
+    private final OrderRepository       orderRepo;
     private final OrderDetailRepository orderDetailRepo;
-    private final CartService cartService;
-    private final CartItemRepository cartItemRepo;
-    private final BookRepository bookRepo;
-    private final UserRepository userRepo;
+    private final CartService           cartService;
+    private final CartItemRepository    cartItemRepo;
+    private final BookRepository        bookRepo;
+    private final UserRepository        userRepo;
+    private final CouponService         couponService;
 
     public OrderService(OrderRepository orderRepo,
                         OrderDetailRepository orderDetailRepo,
                         CartService cartService,
                         CartItemRepository cartItemRepo,
                         BookRepository bookRepo,
-                        UserRepository userRepo) {
-        this.orderRepo = orderRepo;
+                        UserRepository userRepo,
+                        CouponService couponService) {
+        this.orderRepo       = orderRepo;
         this.orderDetailRepo = orderDetailRepo;
-        this.cartService = cartService;
-        this.cartItemRepo = cartItemRepo;
-        this.bookRepo = bookRepo;
-        this.userRepo = userRepo;
+        this.cartService     = cartService;
+        this.cartItemRepo    = cartItemRepo;
+        this.bookRepo        = bookRepo;
+        this.userRepo        = userRepo;
+        this.couponService   = couponService;
     }
 
     @Transactional
-    public Order placeOrder(Long userId, String address) {
+    public Order placeOrder(Long userId, String address, String couponCode) {
         List<CartItem> items = cartItemRepo.findByUserId(userId);
         if (items.isEmpty()) throw new RuntimeException("Giỏ hàng trống!");
 
         User user = userRepo.findById(userId).orElseThrow();
+
+        // Tính tổng tiền gốc
+        double subtotal = 0;
+        for (CartItem item : items) {
+            Book book = item.getBook();
+            if (book.getStock() < item.getQuantity()) {
+                throw new RuntimeException("Sách \"" + book.getTitle() + "\" không đủ hàng!");
+            }
+            double unitPrice = book.getSalePrice() > 0 ? book.getSalePrice() : book.getPrice();
+            subtotal += unitPrice * item.getQuantity();
+        }
+
+        // Áp dụng coupon nếu có
+        double discount = 0;
+        Coupon coupon   = null;
+        if (couponCode != null && !couponCode.isBlank()) {
+            coupon   = couponService.validate(couponCode, subtotal);
+            discount = couponService.calcDiscount(coupon, subtotal);
+        }
+
+        double totalPrice = subtotal - discount;
 
         // Tạo đơn hàng
         Order order = new Order();
@@ -44,39 +68,32 @@ public class OrderService {
         order.setAddress(address);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
-
-        double total = 0;
-        for (CartItem item : items) {
-            Book book = item.getBook();
-
-            // Kiểm tra tồn kho
-            if (book.getStock() < item.getQuantity()) {
-                throw new RuntimeException("Sách \"" + book.getTitle() + "\" không đủ hàng!");
-            }
-
-            double unitPrice = book.getSalePrice() > 0 ? book.getSalePrice() : book.getPrice();
-            total += unitPrice * item.getQuantity();
-
-            // Trừ tồn kho
-            book.setStock(book.getStock() - item.getQuantity());
-            bookRepo.save(book);
-        }
-        order.setTotalPrice(total);
+        order.setTotalPrice(totalPrice);
+        order.setDiscount(discount);
+        order.setCouponCode(couponCode);
         orderRepo.save(order);
 
-        // Lưu chi tiết đơn
+        // Trừ tồn kho + lưu chi tiết
         for (CartItem item : items) {
-            double unitPrice = item.getBook().getSalePrice() > 0
-                    ? item.getBook().getSalePrice() : item.getBook().getPrice();
+            Book book      = item.getBook();
+            double unitPrice = book.getSalePrice() > 0 ? book.getSalePrice() : book.getPrice();
+
+            book.setStock(book.getStock() - item.getQuantity());
+            bookRepo.save(book);
+
             OrderDetail detail = new OrderDetail();
             detail.setOrder(order);
-            detail.setBook(item.getBook());
+            detail.setBook(book);
             detail.setQuantity(item.getQuantity());
             detail.setPrice(unitPrice);
             orderDetailRepo.save(detail);
         }
 
-        // Xóa giỏ hàng
+        // Đánh dấu coupon đã dùng
+        if (coupon != null) {
+            couponService.markUsed(coupon);
+        }
+
         cartService.clearCart(userId);
         return order;
     }

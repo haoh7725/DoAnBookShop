@@ -1,28 +1,111 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
 <head th:replace="~{fragments/layout :: head('Danh sách sách')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
 <main class="container py-5">
-    <h1 class="font-serif fw-bold text-brand fs-3 mb-4">Tất cả sách</h1>
-
-    <!-- Lọc theo thể loại -->
-    <div class="d-flex gap-2 flex-wrap mb-4">
-        <a th:href="@{/books}" class="btn btn-sm btn-outline-secondary">Tất cả</a>
-        <a th:each="cat : ${categories}"
-           th:href="@{/books(categoryId=${cat.id})}"
-           th:text="${cat.name}"
-           class="btn btn-sm btn-outline-secondary"></a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="font-serif fw-bold text-brand fs-3 mb-0">Tất cả sách</h1>
+        <span class="text-muted small" th:if="${!#lists.isEmpty(books)}">
+            <span th:text="${#lists.size(books)}"></span> kết quả
+        </span>
     </div>
 
-    <!-- Grid sách -->
+    <!-- ===== BỘ LỌC ===== -->
+    <form th:action="@{/books}" method="get" class="mb-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="row g-2 align-items-end">
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-medium mb-1">Tìm kiếm</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="keyword" class="form-control"
+                               placeholder="Tên sách, tác giả..."
+                               th:value="${keyword}"/>
+                        <button class="btn btn-brand" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-medium mb-1">Thể loại</label>
+                    <select name="categoryId" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Tất cả</option>
+                        <option th:each="cat : ${categories}"
+                                th:value="${cat.id}"
+                                th:text="${cat.name}"
+                                th:selected="${categoryId != null and categoryId == cat.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-medium mb-1">Giá từ (đ)</label>
+                    <input type="number" name="minPrice" class="form-control form-control-sm"
+                           placeholder="50000" th:value="${minPrice}" min="0"/>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-medium mb-1">Giá đến (đ)</label>
+                    <input type="number" name="maxPrice" class="form-control form-control-sm"
+                           placeholder="200000" th:value="${maxPrice}" min="0"/>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-medium mb-1">Sắp xếp</label>
+                    <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="newest"     th:selected="${sort == 'newest'}">Mới nhất</option>
+                        <option value="price_asc"  th:selected="${sort == 'price_asc'}">Giá tăng dần</option>
+                        <option value="price_desc" th:selected="${sort == 'price_desc'}">Giá giảm dần</option>
+                        <option value="title"      th:selected="${sort == 'title'}">Tên A-Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Active filter tags -->
+            <div class="d-flex flex-wrap gap-2 mt-2"
+                 th:if="${(keyword != null and !keyword.isBlank()) or categoryId != null or minPrice != null or maxPrice != null}">
+                <span class="small text-muted me-1 align-self-center">Đang lọc:</span>
+                <span th:if="${keyword != null and !keyword.isBlank()}"
+                      class="badge text-bg-light border">
+                    Từ khóa: "<span th:text="${keyword}"></span>"
+                    <a th:href="@{/books(categoryId=${categoryId},minPrice=${minPrice},maxPrice=${maxPrice},sort=${sort})}"
+                       class="text-muted text-decoration-none ms-1">×</a>
+                </span>
+                <span th:if="${categoryId != null}" class="badge text-bg-light border">
+                    <span th:each="cat : ${categories}" th:if="${cat.id == categoryId}" th:text="${cat.name}"></span>
+                    <a th:href="@{/books(keyword=${keyword},minPrice=${minPrice},maxPrice=${maxPrice},sort=${sort})}"
+                       class="text-muted text-decoration-none ms-1">×</a>
+                </span>
+                <span th:if="${minPrice != null}" class="badge text-bg-light border">
+                    Từ <span th:text="${#numbers.formatInteger(minPrice,0,'COMMA') + 'đ'}"></span>
+                    <a th:href="@{/books(keyword=${keyword},categoryId=${categoryId},maxPrice=${maxPrice},sort=${sort})}"
+                       class="text-muted text-decoration-none ms-1">×</a>
+                </span>
+                <span th:if="${maxPrice != null}" class="badge text-bg-light border">
+                    Đến <span th:text="${#numbers.formatInteger(maxPrice,0,'COMMA') + 'đ'}"></span>
+                    <a th:href="@{/books(keyword=${keyword},categoryId=${categoryId},minPrice=${minPrice},sort=${sort})}"
+                       class="text-muted text-decoration-none ms-1">×</a>
+                </span>
+                <a th:href="@{/books}" class="btn btn-sm btn-outline-danger py-0 px-2">
+                    <i class="bi bi-x-lg me-1"></i>Xóa tất cả
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- ===== GRID SÁCH ===== -->
     <div class="row g-3">
         <div th:each="book : ${books}" class="col-6 col-sm-4 col-md-3 col-xl-2">
-            <div class="card h-100 border-0 shadow-sm" style="transition:all .2s"
-                 onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.13)'"
-                 onmouseout="this.style.transform='';this.style.boxShadow=''">
-                <a th:href="@{/books/{id}(id=${book.id})}" class="position-relative d-block overflow-hidden" style="padding-top:140%">
+            <div class="card h-100 border-0 shadow-sm book-card" style="transition:all .2s">
+
+                <!-- Ảnh + Quick View overlay -->
+                <div class="position-relative overflow-hidden"
+                     style="padding-top:140%;cursor:pointer"
+                     th:onclick="'openQuickView(' + ${book.id} + ')'">
                     <img th:if="${book.imagePath != null}"
                          th:src="${book.imagePath}" th:alt="${book.title}"
                          class="position-absolute top-0 start-0 w-100 h-100"
@@ -32,36 +115,135 @@
                          class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light">
                         <i class="bi bi-book text-muted" style="font-size:48px"></i>
                     </div>
-                    <span th:if="${book.salePrice > 0}" class="badge position-absolute top-0 start-0 m-2" style="background:var(--accent)">SALE</span>
-                </a>
+                    <span th:if="${book.salePrice > 0}"
+                          class="badge position-absolute top-0 start-0 m-2"
+                          style="background:var(--accent)">SALE</span>
+                    <span th:if="${book.stock == 0}"
+                          class="badge bg-secondary position-absolute top-0 end-0 m-2">Hết</span>
+                    <div class="qv-overlay position-absolute bottom-0 start-0 w-100 text-center py-2"
+                         style="background:rgba(44,24,16,.8);opacity:0;transition:opacity .2s;pointer-events:none">
+                        <span class="text-white small fw-medium">
+                            <i class="bi bi-eye me-1"></i>Xem nhanh
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Thông tin -->
                 <div class="card-body p-2 d-flex flex-column">
-                    <p class="text-accent small mb-1 text-uppercase fw-semibold" style="font-size:10px;letter-spacing:.5px"
+                    <p class="text-accent small mb-1 text-uppercase fw-semibold"
+                       style="font-size:10px;letter-spacing:.5px"
                        th:text="${book.category != null ? book.category.name : ''}"></p>
-                    <h6 class="font-serif fw-semibold mb-1 text-brand" style="font-size:13px;line-height:1.3"
+                    <h6 class="font-serif fw-semibold mb-1 text-brand"
+                        style="font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden"
                         th:text="${book.title}"></h6>
                     <p class="text-muted mb-2" style="font-size:11px" th:text="${book.author}"></p>
+
                     <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="fw-bold text-brand" style="font-size:14px"
-                  th:text="${book.salePrice > 0 ?
-                    #numbers.formatInteger(book.salePrice,0,'COMMA') + 'đ' :
-                    #numbers.formatInteger(book.price,0,'COMMA') + 'đ'}"></span>
+                        <span class="fw-bold text-brand" style="font-size:14px"
+                              th:text="${book.salePrice > 0
+                                ? #numbers.formatInteger(book.salePrice,0,'COMMA') + 'đ'
+                                : #numbers.formatInteger(book.price,0,'COMMA') + 'đ'}">
+                        </span>
                         <span th:if="${book.salePrice > 0}"
                               class="text-muted text-decoration-line-through" style="font-size:11px"
-                              th:text="${#numbers.formatInteger(book.price,0,'COMMA') + 'đ'}"></span>
+                              th:text="${#numbers.formatInteger(book.price,0,'COMMA') + 'đ'}">
+                        </span>
                     </div>
-                    <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-outline-secondary btn-sm mt-auto w-100" style="font-size:12px">
-                        Xem chi tiết
-                    </a>
+
+                    <div class="d-flex gap-1 mt-auto">
+                        <a th:href="@{/books/{id}(id=${book.id})}"
+                           class="btn btn-outline-secondary btn-sm" style="font-size:11px" title="Chi tiết">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <button sec:authorize="!hasRole('ADMIN') and isAuthenticated()"
+                                class="btn btn-brand btn-sm flex-grow-1 btn-add-cart"
+                                th:data-id="${book.id}"
+                                th:disabled="${book.stock == 0}"
+                                style="font-size:11px">
+                            <i class="bi bi-cart-plus me-1"></i>
+                            <span th:text="${book.stock > 0 ? 'Thêm' : 'Hết'}"></span>
+                        </button>
+                        <a sec:authorize="isAnonymous()"
+                           th:href="@{/login}"
+                           class="btn btn-brand btn-sm flex-grow-1"
+                           style="font-size:11px"
+                           th:classappend="${book.stock == 0 ? ' disabled' : ''}">
+                            <i class="bi bi-cart-plus me-1"></i>Thêm
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div th:if="${#lists.isEmpty(books)}" class="col-12">
-            <p class="text-muted text-center py-5">Chưa có sách nào.</p>
+            <div class="text-center py-5">
+                <i class="bi bi-search text-muted" style="font-size:48px"></i>
+                <p class="text-muted mt-3">Không tìm thấy sách phù hợp.</p>
+                <a th:href="@{/books}" class="btn btn-outline-secondary btn-sm mt-2">Xóa bộ lọc</a>
+            </div>
         </div>
     </div>
+
+    <!-- ===== PAGINATION ===== -->
+    <nav th:if="${totalPages > 1}" class="mt-5 d-flex justify-content-center">
+        <ul class="pagination">
+            <li class="page-item" th:classappend="${currentPage == 0 ? ' disabled' : ''}">
+                <a class="page-link"
+                   th:href="@{/books(keyword=${keyword},categoryId=${categoryId},minPrice=${minPrice},maxPrice=${maxPrice},sort=${sort},page=${currentPage - 1})}">«</a>
+            </li>
+            <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                class="page-item" th:classappend="${i == currentPage ? ' active' : ''}">
+                <a class="page-link" th:text="${i + 1}"
+                   th:href="@{/books(keyword=${keyword},categoryId=${categoryId},minPrice=${minPrice},maxPrice=${maxPrice},sort=${sort},page=${i})}">
+                </a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? ' disabled' : ''}">
+                <a class="page-link"
+                   th:href="@{/books(keyword=${keyword},categoryId=${categoryId},minPrice=${minPrice},maxPrice=${maxPrice},sort=${sort},page=${currentPage + 1})}">»</a>
+            </li>
+        </ul>
+    </nav>
 </main>
 
+<!-- ===== QUICK VIEW MODAL ===== -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-0" id="quickViewBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-secondary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/layout :: footer}"></div>
+
+<style>
+    .book-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.13) !important; }
+    .book-card:hover .qv-overlay { opacity: 1 !important; }
+</style>
+
+<script>
+    // Quick View: fetch fragment từ server
+    function openQuickView(bookId) {
+        const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+        const body  = document.getElementById('quickViewBody');
+        body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-secondary" role="status"></div></div>';
+        modal.show();
+
+        fetch('/books/' + bookId + '/quickview')
+            .then(r => {
+                if (!r.ok) throw new Error();
+                return r.text();
+            })
+            .then(html => { body.innerHTML = html; })
+            .catch(() => { body.innerHTML = '<p class="text-center text-muted py-4">Không thể tải thông tin sách.</p>'; });
+    }
+</script>
 </body>
 </html>

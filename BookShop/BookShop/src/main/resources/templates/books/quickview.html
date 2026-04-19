@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<!-- Fragment không có layout, chỉ render nội dung modal body -->
+<body>
+<div class="row g-4">
+
+    <!-- Ảnh bìa -->
+    <div class="col-md-4 text-center">
+        <img th:if="${book.imagePath != null}"
+             th:src="${book.imagePath}" th:alt="${book.title}"
+             class="img-fluid rounded shadow"
+             style="max-height:320px;object-fit:cover;width:100%"
+             onerror="this.style.display='none'"/>
+        <div th:if="${book.imagePath == null}"
+             class="d-flex align-items-center justify-content-center bg-light rounded"
+             style="height:280px">
+            <i class="bi bi-book text-muted" style="font-size:64px"></i>
+        </div>
+    </div>
+
+    <!-- Thông tin -->
+    <div class="col-md-8">
+        <p th:if="${book.category != null}"
+           class="text-uppercase fw-semibold mb-1 text-accent"
+           style="font-size:11px;letter-spacing:1px"
+           th:text="${book.category.name}"></p>
+
+        <h4 class="font-serif fw-bold text-brand mb-1" th:text="${book.title}"></h4>
+
+        <p class="text-muted small mb-3" th:if="${book.author != null}">
+            <i class="bi bi-person me-1"></i><span th:text="${book.author}"></span>
+            <span th:if="${book.publisher != null}"> · <span th:text="${book.publisher}"></span></span>
+        </p>
+
+        <!-- Giá -->
+        <div class="d-flex align-items-baseline gap-3 mb-3">
+            <span class="fw-bold text-brand fs-4"
+                  th:text="${book.salePrice > 0
+                    ? #numbers.formatInteger(book.salePrice,0,'COMMA') + 'đ'
+                    : #numbers.formatInteger(book.price,0,'COMMA') + 'đ'}">
+            </span>
+            <span th:if="${book.salePrice > 0}"
+                  class="text-muted text-decoration-line-through"
+                  th:text="${#numbers.formatInteger(book.price,0,'COMMA') + 'đ'}">
+            </span>
+            <span th:if="${book.salePrice > 0}"
+                  class="badge text-bg-danger"
+                  th:text="${'-' + #numbers.formatInteger((1 - book.salePrice / book.price) * 100, 0, 'COMMA') + '%'}">
+            </span>
+        </div>
+
+        <!-- Tồn kho -->
+        <div class="mb-3">
+            <span th:if="${book.stock > 5}" class="badge text-bg-success">
+                <i class="bi bi-check-circle me-1"></i>Còn hàng
+            </span>
+            <span th:if="${book.stock > 0 and book.stock <= 5}" class="badge text-bg-warning">
+                <i class="bi bi-exclamation-triangle me-1"></i>Còn <span th:text="${book.stock}"></span> cuốn
+            </span>
+            <span th:if="${book.stock == 0}" class="badge text-bg-danger">
+                <i class="bi bi-x-circle me-1"></i>Hết hàng
+            </span>
+        </div>
+
+        <!-- Mô tả ngắn -->
+        <p th:if="${book.description != null and !#strings.isEmpty(book.description)}"
+           class="text-muted small mb-4"
+           style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.6"
+           th:text="${book.description}">
+        </p>
+
+        <!-- Nút hành động -->
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- User đã đăng nhập -->
+            <button sec:authorize="!hasRole('ADMIN') and isAuthenticated()"
+                    class="btn btn-brand btn-add-cart"
+                    th:data-id="${book.id}"
+                    th:disabled="${book.stock == 0}"
+                    onclick="document.getElementById('quickViewModal').querySelector('.btn-close').click()">
+                <i class="bi bi-cart-plus me-2"></i>
+                <span th:text="${book.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}"></span>
+            </button>
+
+            <!-- Chưa đăng nhập -->
+            <a sec:authorize="isAnonymous()"
+               th:href="@{/login}"
+               class="btn btn-brand"
+               th:classappend="${book.stock == 0 ? ' disabled' : ''}">
+                <i class="bi bi-cart-plus me-2"></i>Thêm vào giỏ
+            </a>
+
+            <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Xem trang đầy đủ
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -12,7 +12,10 @@
             Đăng ký thành công! Hãy đăng nhập.
         </div>
         <div th:if="${param.error}" class="alert alert-danger py-2 small">
-            Sai tên đăng nhập hoặc mật khẩu!
+            <i class="bi bi-exclamation-circle me-1"></i>Sai tên đăng nhập hoặc mật khẩu!
+        </div>
+        <div th:if="${param.logout}" class="alert alert-info py-2 small">
+            Bạn đã đăng xuất thành công.
         </div>
 
         <form action="/login" method="post">
@@ -22,20 +25,53 @@
                 <label class="form-label small fw-medium">Tên đăng nhập</label>
                 <input type="text" name="username" class="form-control" required autofocus/>
             </div>
-            <div class="mb-4">
+            <div class="mb-3">
                 <label class="form-label small fw-medium">Mật khẩu</label>
-                <input type="password" name="password" class="form-control" required/>
+                <div class="input-group">
+                    <input type="password" name="password" id="passwordInput"
+                           class="form-control" required/>
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="togglePwd()">
+                        <i class="bi bi-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="mb-4 d-flex align-items-center justify-content-between">
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox"
+                           name="remember-me" id="rememberMe"/>
+                    <label class="form-check-label small" for="rememberMe">
+                        Ghi nhớ đăng nhập (7 ngày)
+                    </label>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-brand w-100">Đăng nhập</button>
         </form>
 
         <p class="text-center small text-muted mt-3 mb-0">
-            Chưa có tài khoản? <a th:href="@{/register}" class="text-accent fw-medium">Đăng ký ngay</a>
+            Chưa có tài khoản?
+            <a th:href="@{/register}" class="text-accent fw-medium">Đăng ký ngay</a>
         </p>
     </div>
 </main>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
+
+<script>
+    function togglePwd() {
+        const input = document.getElementById('passwordInput');
+        const icon  = document.getElementById('eyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+</script>
 </body>
 </html>

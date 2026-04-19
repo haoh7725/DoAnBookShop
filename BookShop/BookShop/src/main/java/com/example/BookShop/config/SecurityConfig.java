@@ -1,6 +1,5 @@
 package com.example.BookShop.config;
 
-import com.example.BookShop.service.UserService;
 import org.springframework.context.annotation.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,10 +18,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login", "/books", "/books/**",
-                                "/uploads/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(
+                                "/", "/register", "/login",
+                                "/books", "/books/**",
+                                "/uploads/**", "/css/**", "/js/**"
+                        ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()  // /cart, /checkout, /orders đều cần login
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -34,8 +36,14 @@ public class SecurityConfig {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
+                .rememberMe(rem -> rem
+                        .key("bookshop-remember-me-secret")
+                        .tokenValiditySeconds(7 * 24 * 60 * 60)   // 7 ngày
+                        .rememberMeParameter("remember-me")        // tên checkbox
+                )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login")
+                        .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll()
                 );
 

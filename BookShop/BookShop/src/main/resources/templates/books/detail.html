@@ -1,65 +1,165 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Danh sách sách')}"></head>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6">
+<head th:replace="~{fragments/layout :: head(${book.title})}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-<main class="container py-5">
-    <h1 class="font-serif fw-bold text-brand fs-3 mb-4">Tất cả sách</h1>
+<main class="container py-5" style="max-width:960px">
 
-    <!-- Lọc theo thể loại -->
-    <div class="d-flex gap-2 flex-wrap mb-4">
-        <a th:href="@{/books}" class="btn btn-sm btn-outline-secondary">Tất cả</a>
-        <a th:each="cat : ${categories}"
-           th:href="@{/books(categoryId=${cat.id})}"
-           th:text="${cat.name}"
-           class="btn btn-sm btn-outline-secondary"></a>
-    </div>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/}" class="text-accent text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/books}" class="text-accent text-decoration-none">Sách</a></li>
+            <li th:if="${book.category != null}" class="breadcrumb-item">
+                <a th:href="@{/books(categoryId=${book.category.id})}"
+                   th:text="${book.category.name}"
+                   class="text-accent text-decoration-none"></a>
+            </li>
+            <li class="breadcrumb-item active text-muted" th:text="${book.title}"></li>
+        </ol>
+    </nav>
 
-    <!-- Grid sách -->
-    <div class="row g-3">
-        <div th:each="book : ${books}" class="col-6 col-sm-4 col-md-3 col-xl-2">
-            <div class="card h-100 border-0 shadow-sm" style="transition:all .2s"
-                 onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.13)'"
-                 onmouseout="this.style.transform='';this.style.boxShadow=''">
-                <a th:href="@{/books/{id}(id=${book.id})}" class="position-relative d-block overflow-hidden" style="padding-top:140%">
-                    <img th:if="${book.imagePath != null}"
-                         th:src="${book.imagePath}" th:alt="${book.title}"
-                         class="position-absolute top-0 start-0 w-100 h-100"
-                         style="object-fit:cover"
-                         onerror="this.parentElement.innerHTML='<div class=\'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light\'><i class=\'bi bi-book text-muted\' style=\'font-size:48px\'></i></div>'"/>
-                    <div th:if="${book.imagePath == null}"
-                         class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light">
-                        <i class="bi bi-book text-muted" style="font-size:48px"></i>
-                    </div>
-                    <span th:if="${book.salePrice > 0}" class="badge position-absolute top-0 start-0 m-2" style="background:var(--accent)">SALE</span>
-                </a>
-                <div class="card-body p-2 d-flex flex-column">
-                    <p class="text-accent small mb-1 text-uppercase fw-semibold" style="font-size:10px;letter-spacing:.5px"
-                       th:text="${book.category != null ? book.category.name : ''}"></p>
-                    <h6 class="font-serif fw-semibold mb-1 text-brand" style="font-size:13px;line-height:1.3"
-                        th:text="${book.title}"></h6>
-                    <p class="text-muted mb-2" style="font-size:11px" th:text="${book.author}"></p>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="fw-bold text-brand" style="font-size:14px"
-                  th:text="${book.salePrice > 0 ?
-                    #numbers.formatInteger(book.salePrice,0,'COMMA') + 'đ' :
-                    #numbers.formatInteger(book.price,0,'COMMA') + 'đ'}"></span>
-                        <span th:if="${book.salePrice > 0}"
-                              class="text-muted text-decoration-line-through" style="font-size:11px"
-                              th:text="${#numbers.formatInteger(book.price,0,'COMMA') + 'đ'}"></span>
-                    </div>
-                    <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-outline-secondary btn-sm mt-auto w-100" style="font-size:12px">
-                        Xem chi tiết
-                    </a>
+    <div class="row g-5">
+
+        <!-- Ảnh bìa -->
+        <div class="col-md-4 text-center">
+            <div class="position-relative d-inline-block">
+                <img th:if="${book.imagePath != null}"
+                     th:src="${book.imagePath}" th:alt="${book.title}"
+                     class="img-fluid rounded shadow"
+                     style="max-height:420px;object-fit:cover;width:100%"
+                     onerror="this.parentElement.innerHTML='<div class=\'d-flex align-items-center justify-content-center bg-light rounded shadow\' style=\'height:380px;width:260px\'><i class=\'bi bi-book text-muted\' style=\'font-size:80px\'></i></div>'"/>
+                <div th:if="${book.imagePath == null}"
+                     class="d-flex align-items-center justify-content-center bg-light rounded shadow"
+                     style="height:380px;width:100%">
+                    <i class="bi bi-book text-muted" style="font-size:80px"></i>
                 </div>
+                <span th:if="${book.salePrice > 0}"
+                      class="badge position-absolute top-0 start-0 m-2 fs-6"
+                      style="background:var(--accent)">SALE</span>
             </div>
         </div>
 
-        <div th:if="${#lists.isEmpty(books)}" class="col-12">
-            <p class="text-muted text-center py-5">Chưa có sách nào.</p>
+        <!-- Thông tin sách -->
+        <div class="col-md-8">
+            <!-- Category badge -->
+            <p th:if="${book.category != null}"
+               class="text-uppercase fw-semibold mb-2 text-accent"
+               style="font-size:11px;letter-spacing:1px"
+               th:text="${book.category.name}"></p>
+
+            <h1 class="font-serif fw-bold text-brand" style="line-height:1.2"
+                th:text="${book.title}"></h1>
+
+            <p class="text-muted mb-3" th:if="${book.author != null}">
+                <i class="bi bi-person me-1"></i>
+                <span th:text="${book.author}"></span>
+                <span th:if="${book.publisher != null}" class="ms-2">
+                    · <span th:text="${book.publisher}"></span>
+                </span>
+                <span th:if="${book.publishYear > 0}" class="ms-2">
+                    · <span th:text="${book.publishYear}"></span>
+                </span>
+            </p>
+
+            <!-- Giá -->
+            <div class="d-flex align-items-baseline gap-3 mb-4">
+                <span class="fw-bold text-brand" style="font-size:2rem"
+                      th:text="${book.salePrice > 0
+                        ? #numbers.formatInteger(book.salePrice, 0, 'COMMA') + 'đ'
+                        : #numbers.formatInteger(book.price, 0, 'COMMA') + 'đ'}">
+                </span>
+                <span th:if="${book.salePrice > 0}"
+                      class="text-muted text-decoration-line-through fs-5"
+                      th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + 'đ'}">
+                </span>
+                <span th:if="${book.salePrice > 0}"
+                      class="badge text-bg-danger"
+                      th:text="${'-' + #numbers.formatInteger((1 - book.salePrice / book.price) * 100, 0, 'COMMA') + '%'}">
+                </span>
+            </div>
+
+            <!-- Tồn kho -->
+            <div class="mb-4">
+                <span th:if="${book.stock > 5}"
+                      class="badge text-bg-success py-2 px-3">
+                    <i class="bi bi-check-circle me-1"></i>Còn hàng
+                    (<span th:text="${book.stock}"></span> cuốn)
+                </span>
+                <span th:if="${book.stock > 0 && book.stock <= 5}"
+                      class="badge text-bg-warning py-2 px-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Sắp hết — còn
+                    <span th:text="${book.stock}"></span> cuốn
+                </span>
+                <span th:if="${book.stock == 0}"
+                      class="badge text-bg-danger py-2 px-3">
+                    <i class="bi bi-x-circle me-1"></i>Hết hàng
+                </span>
+            </div>
+
+            <!-- Nút thêm vào giỏ -->
+            <div class="d-flex gap-2 flex-wrap mb-5">
+                <!-- Có tài khoản user: nút AJAX -->
+                <button sec:authorize="!hasRole('ADMIN') and isAuthenticated()"
+                        class="btn btn-brand btn-lg px-5 btn-add-cart"
+                        th:data-id="${book.id}"
+                        th:disabled="${book.stock == 0}">
+                    <i class="bi bi-cart-plus me-2"></i>
+                    <span th:text="${book.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}"></span>
+                </button>
+
+                <!-- Chưa đăng nhập: chuyển đến login -->
+                <a sec:authorize="isAnonymous()"
+                   th:href="@{/login}"
+                   class="btn btn-brand btn-lg px-5"
+                   th:classappend="${book.stock == 0 ? ' disabled' : ''}">
+                    <i class="bi bi-cart-plus me-2"></i>
+                    <span th:text="${book.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}"></span>
+                </a>
+
+                <a th:href="@{/books}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại
+                </a>
+            </div>
+
+            <!-- Thông tin thêm -->
+            <div class="card border-0 bg-light rounded-3 p-3 small">
+                <div class="row g-2">
+                    <div class="col-6" th:if="${book.author != null}">
+                        <span class="text-muted">Tác giả:</span>
+                        <span class="fw-medium ms-1" th:text="${book.author}"></span>
+                    </div>
+                    <div class="col-6" th:if="${book.publisher != null}">
+                        <span class="text-muted">NXB:</span>
+                        <span class="fw-medium ms-1" th:text="${book.publisher}"></span>
+                    </div>
+                    <div class="col-6" th:if="${book.publishYear > 0}">
+                        <span class="text-muted">Năm XB:</span>
+                        <span class="fw-medium ms-1" th:text="${book.publishYear}"></span>
+                    </div>
+                    <div class="col-6" th:if="${book.category != null}">
+                        <span class="text-muted">Thể loại:</span>
+                        <a th:href="@{/books(categoryId=${book.category.id})}"
+                           th:text="${book.category.name}"
+                           class="fw-medium ms-1 text-accent text-decoration-none"></a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Mô tả sách -->
+    <div th:if="${book.description != null and !#strings.isEmpty(book.description)}"
+         class="mt-5">
+        <h4 class="font-serif fw-bold text-brand mb-3">Mô tả sách</h4>
+        <div class="card border-0 shadow-sm p-4">
+            <p class="text-muted mb-0" style="line-height:1.8;white-space:pre-line"
+               th:text="${book.description}"></p>
+        </div>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/layout :: footer}"></div>

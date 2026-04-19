@@ -4,31 +4,39 @@ import com.example.BookShop.model.Order;
 import com.example.BookShop.model.OrderStatus;
 import com.example.BookShop.repository.OrderDetailRepository;
 import com.example.BookShop.repository.OrderRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin/orders")
 public class AdminOrderController {
 
-    private final OrderRepository orderRepo;
+    private final OrderRepository       orderRepo;
     private final OrderDetailRepository orderDetailRepo;
 
     public AdminOrderController(OrderRepository orderRepo,
                                 OrderDetailRepository orderDetailRepo) {
-        this.orderRepo = orderRepo;
+        this.orderRepo       = orderRepo;
         this.orderDetailRepo = orderDetailRepo;
     }
 
-    // Danh sách tất cả đơn hàng
+    // Danh sách — hỗ trợ lọc theo ?status=
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("orders", orderRepo.findAll(
-                org.springframework.data.domain.Sort.by(
-                        org.springframework.data.domain.Sort.Direction.DESC, "orderDate")));
-        model.addAttribute("statuses", OrderStatus.values());
+    public String list(@RequestParam(required = false) OrderStatus status,
+                       Model model) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "orderDate");
+
+        List<Order> orders = (status == null)
+                ? orderRepo.findAll(sort)
+                : orderRepo.findByStatus(status, sort);
+
+        model.addAttribute("orders",        orders);
+        model.addAttribute("statuses",      OrderStatus.values());
+        model.addAttribute("selectedStatus", status);
         return "admin/orders/list";
     }
 
@@ -36,45 +44,42 @@ public class AdminOrderController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         Order order = orderRepo.findById(id).orElseThrow();
-        model.addAttribute("order", order);
-        model.addAttribute("details", orderDetailRepo.findByOrderId(id));
+        model.addAttribute("order",    order);
+        model.addAttribute("details",  orderDetailRepo.findByOrderId(id));
         model.addAttribute("statuses", OrderStatus.values());
         return "admin/orders/detail";
     }
 
-    // Cập nhật trạng thái đơn hàng
+    // Cập nhật trạng thái
     @PostMapping("/{id}/status")
     public String updateStatus(@PathVariable Long id,
                                @RequestParam OrderStatus status,
-                               RedirectAttributes redirectAttributes) {
+                               RedirectAttributes ra) {
         Order order = orderRepo.findById(id).orElseThrow();
 
-        // Validate luồng trạng thái hợp lệ
         if (!isValidTransition(order.getStatus(), status)) {
-            redirectAttributes.addFlashAttribute("errorMsg",
-                    "Không thể chuyển từ \"" + labelOf(order.getStatus()) +
-                            "\" sang \"" + labelOf(status) + "\"!");
+            ra.addFlashAttribute("errorMsg",
+                    "Không thể chuyển từ \"" + label(order.getStatus()) +
+                            "\" sang \"" + label(status) + "\"!");
             return "redirect:/admin/orders/" + id;
         }
 
         order.setStatus(status);
         orderRepo.save(order);
-        redirectAttributes.addFlashAttribute("successMsg",
-                "Đã cập nhật trạng thái thành: " + labelOf(status));
+        ra.addFlashAttribute("successMsg", "Đã cập nhật: " + label(status));
         return "redirect:/admin/orders/" + id;
     }
 
-    // Quy định luồng chuyển trạng thái hợp lệ
     private boolean isValidTransition(OrderStatus from, OrderStatus to) {
         return switch (from) {
             case PENDING   -> to == OrderStatus.CONFIRMED || to == OrderStatus.CANCELLED;
             case CONFIRMED -> to == OrderStatus.SHIPPING;
             case SHIPPING  -> to == OrderStatus.COMPLETED;
-            default        -> false; // COMPLETED, CANCELLED không chuyển được nữa
+            default        -> false;
         };
     }
 
-    private String labelOf(OrderStatus s) {
+    private String label(OrderStatus s) {
         return switch (s) {
             case PENDING   -> "Chờ xác nhận";
             case CONFIRMED -> "Đã xác nhận";
