@@ -39,4 +39,5 @@ public class UserController {
         userService.register(username, password, fullName, email, phone);
         return "redirect:/login?registered=true";
     }
+
 }

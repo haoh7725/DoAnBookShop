@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản lý đơn hàng')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="font-serif fw-bold text-brand fs-3 mb-0">Quản lý đơn hàng</h1>
+        <span class="badge text-bg-secondary fs-6" th:text="${#lists.size(orders)} + ' đơn'"></span>
+    </div>
+
+    <div th:if="${successMsg}" class="alert alert-success alert-dismissible" th:text="${successMsg}">
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Bộ lọc trạng thái -->
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a href="/admin/orders" class="btn btn-sm btn-outline-secondary">Tất cả</a>
+        <a href="/admin/orders?status=PENDING"   class="btn btn-sm btn-warning text-dark">Chờ xác nhận</a>
+        <a href="/admin/orders?status=CONFIRMED" class="btn btn-sm btn-info text-dark">Đã xác nhận</a>
+        <a href="/admin/orders?status=SHIPPING"  class="btn btn-sm btn-primary">Đang giao</a>
+        <a href="/admin/orders?status=COMPLETED" class="btn btn-sm btn-success">Hoàn thành</a>
+        <a href="/admin/orders?status=CANCELLED" class="btn btn-sm btn-secondary">Đã hủy</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Địa chỉ</th>
+                    <th>Trạng thái</th>
+                    <th style="width:90px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td class="fw-medium">#<span th:text="${order.id}"></span></td>
+                    <td>
+                        <p class="mb-0 small fw-medium" th:text="${order.user.fullName ?: order.user.username}"></p>
+                        <p class="mb-0 text-muted" style="font-size:11px" th:text="${order.user.email}"></p>
+                    </td>
+                    <td class="text-muted small"
+                        th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td class="fw-medium text-brand"
+                        th:text="${#numbers.formatInteger(order.totalPrice,0,'COMMA') + 'đ'}"></td>
+                    <td class="text-muted small"
+                        style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                        th:text="${order.address}"></td>
+                    <td>
+                        <span th:switch="${order.status.name()}">
+                            <span th:case="'PENDING'"   class="badge text-bg-warning">Chờ xác nhận</span>
+                            <span th:case="'CONFIRMED'" class="badge text-bg-info">Đã xác nhận</span>
+                            <span th:case="'SHIPPING'"  class="badge text-bg-primary">Đang giao</span>
+                            <span th:case="'COMPLETED'" class="badge text-bg-success">Hoàn thành</span>
+                            <span th:case="'CANCELLED'" class="badge text-bg-secondary">Đã hủy</span>
+                        </span>
+                    </td>
+                    <td>
+                        <a th:href="@{/admin/orders/{id}(id=${order.id})}"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i>Chi tiết
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(orders)}">
+                    <td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

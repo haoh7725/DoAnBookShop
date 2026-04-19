@@ -26,7 +26,11 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/books", true)
+                        .successHandler((request, response, authentication) -> {
+                            boolean isAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            response.sendRedirect(isAdmin ? "/admin" : "/books");
+                        })
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )

@@ -1,6 +1,7 @@
 package com.example.BookShop.controller;
 
 import com.example.BookShop.model.OrderStatus;
+import com.example.BookShop.model.Role;
 import com.example.BookShop.repository.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,7 +28,7 @@ public class AdminDashboardController {
     public String dashboard(Model model) {
         model.addAttribute("totalRevenue",    orderRepo.sumCompletedRevenue());
         model.addAttribute("pendingOrders",   orderRepo.countByStatus(OrderStatus.PENDING));
-        model.addAttribute("totalUsers",      userRepo.count());
+        model.addAttribute("totalUsers",      userRepo.countByRole(Role.USER)); // chỉ đếm USER
         model.addAttribute("totalBooks",      bookRepo.count());
         model.addAttribute("recentOrders",    orderRepo.findTop10ByOrderByOrderDateDesc());
         model.addAttribute("lowStockBooks",   bookRepo.findByStockLessThan(5));
