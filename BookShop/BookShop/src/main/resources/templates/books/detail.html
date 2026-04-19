@@ -4,6 +4,8 @@
 <head th:replace="~{fragments/layout :: head(${book.title})}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
 <main class="container py-5" style="max-width:960px">
 
@@ -22,15 +24,13 @@
     </nav>
 
     <div class="row g-5">
-
         <!-- Ảnh bìa -->
         <div class="col-md-4 text-center">
             <div class="position-relative d-inline-block">
                 <img th:if="${book.imagePath != null}"
                      th:src="${book.imagePath}" th:alt="${book.title}"
                      class="img-fluid rounded shadow"
-                     style="max-height:420px;object-fit:cover;width:100%"
-                     onerror="this.parentElement.innerHTML='<div class=\'d-flex align-items-center justify-content-center bg-light rounded shadow\' style=\'height:380px;width:260px\'><i class=\'bi bi-book text-muted\' style=\'font-size:80px\'></i></div>'"/>
+                     style="max-height:420px;object-fit:cover;width:100%"/>
                 <div th:if="${book.imagePath == null}"
                      class="d-flex align-items-center justify-content-center bg-light rounded shadow"
                      style="height:380px;width:100%">
@@ -44,7 +44,6 @@
 
         <!-- Thông tin sách -->
         <div class="col-md-8">
-            <!-- Category badge -->
             <p th:if="${book.category != null}"
                class="text-uppercase fw-semibold mb-2 text-accent"
                style="font-size:11px;letter-spacing:1px"
@@ -53,7 +52,7 @@
             <h1 class="font-serif fw-bold text-brand" style="line-height:1.2"
                 th:text="${book.title}"></h1>
 
-            <p class="text-muted mb-3" th:if="${book.author != null}">
+            <p class="text-muted mb-2" th:if="${book.author != null}">
                 <i class="bi bi-person me-1"></i>
                 <span th:text="${book.author}"></span>
                 <span th:if="${book.publisher != null}" class="ms-2">
@@ -63,6 +62,19 @@
                     · <span th:text="${book.publishYear}"></span>
                 </span>
             </p>
+
+            <!-- Điểm đánh giá tổng hợp -->
+            <div class="d-flex align-items-center gap-2 mb-3" th:if="${reviewCount > 0}">
+                <div>
+                    <span th:each="i : ${#numbers.sequence(1, 5)}">
+                        <i th:class="${i <= avgRating ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'}"
+                           style="font-size:16px"></i>
+                    </span>
+                </div>
+                <span class="fw-medium text-brand" th:text="${#numbers.formatDecimal(avgRating, 1, 1)}"></span>
+                <span class="text-muted small"
+                      th:text="'(' + ${reviewCount} + ' đánh giá)'"></span>
+            </div>
 
             <!-- Giá -->
             <div class="d-flex align-items-baseline gap-3 mb-4">
@@ -83,25 +95,21 @@
 
             <!-- Tồn kho -->
             <div class="mb-4">
-                <span th:if="${book.stock > 5}"
-                      class="badge text-bg-success py-2 px-3">
+                <span th:if="${book.stock > 5}" class="badge text-bg-success py-2 px-3">
                     <i class="bi bi-check-circle me-1"></i>Còn hàng
                     (<span th:text="${book.stock}"></span> cuốn)
                 </span>
-                <span th:if="${book.stock > 0 && book.stock <= 5}"
-                      class="badge text-bg-warning py-2 px-3">
+                <span th:if="${book.stock > 0 && book.stock <= 5}" class="badge text-bg-warning py-2 px-3">
                     <i class="bi bi-exclamation-triangle me-1"></i>Sắp hết — còn
                     <span th:text="${book.stock}"></span> cuốn
                 </span>
-                <span th:if="${book.stock == 0}"
-                      class="badge text-bg-danger py-2 px-3">
+                <span th:if="${book.stock == 0}" class="badge text-bg-danger py-2 px-3">
                     <i class="bi bi-x-circle me-1"></i>Hết hàng
                 </span>
             </div>
 
             <!-- Nút thêm vào giỏ -->
-            <div class="d-flex gap-2 flex-wrap mb-5">
-                <!-- Có tài khoản user: nút AJAX -->
+            <div class="d-flex gap-2 flex-wrap mb-4">
                 <button sec:authorize="!hasRole('ADMIN') and isAuthenticated()"
                         class="btn btn-brand btn-lg px-5 btn-add-cart"
                         th:data-id="${book.id}"
@@ -109,8 +117,6 @@
                     <i class="bi bi-cart-plus me-2"></i>
                     <span th:text="${book.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}"></span>
                 </button>
-
-                <!-- Chưa đăng nhập: chuyển đến login -->
                 <a sec:authorize="isAnonymous()"
                    th:href="@{/login}"
                    class="btn btn-brand btn-lg px-5"
@@ -118,7 +124,6 @@
                     <i class="bi bi-cart-plus me-2"></i>
                     <span th:text="${book.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}"></span>
                 </a>
-
                 <a th:href="@{/books}" class="btn btn-outline-secondary btn-lg">
                     <i class="bi bi-arrow-left me-1"></i>Quay lại
                 </a>
@@ -160,8 +165,165 @@
         </div>
     </div>
 
+    <!-- ===== PHẦN ĐÁNH GIÁ ===== -->
+    <div class="mt-5">
+        <h4 class="font-serif fw-bold text-brand mb-4">
+            Đánh giá từ người đọc
+            <span th:if="${reviewCount > 0}"
+                  class="badge text-bg-secondary fs-6 ms-2"
+                  th:text="${reviewCount}"></span>
+        </h4>
+
+        <!-- Thông báo sau khi gửi đánh giá -->
+        <div th:if="${reviewSuccess}" class="alert alert-success alert-dismissible">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${reviewSuccess}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${reviewError}" class="alert alert-danger alert-dismissible">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <span th:text="${reviewError}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Form viết đánh giá (user đã đăng nhập, chưa review, không phải admin) -->
+        <div sec:authorize="!hasRole('ADMIN') and isAuthenticated()"
+             th:if="${!hasReviewed}"
+             class="card border-0 shadow-sm p-4 mb-4">
+            <h6 class="font-serif fw-bold text-brand mb-3">Viết đánh giá của bạn</h6>
+            <form th:action="@{/reviews/submit}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="bookId" th:value="${book.id}"/>
+
+                <!-- Chọn sao -->
+                <div class="mb-3">
+                    <label class="form-label small fw-medium">Điểm đánh giá <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-2 star-rating" id="starRating">
+                        <input type="hidden" name="rating" id="ratingValue" value="0" required/>
+                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                           class="bi bi-star star-btn"
+                           th:data-value="${i}"
+                           style="font-size:28px;cursor:pointer;color:#dee2e6;transition:color .15s"
+                           onclick="setRating(this.dataset.value)"
+                           onmouseover="hoverRating(this.dataset.value)"
+                           onmouseout="resetHover()"></i>
+                        <span class="ms-2 align-self-center small text-muted" id="ratingText">Chọn điểm</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-medium">Nhận xét</label>
+                    <textarea name="comment" class="form-control" rows="3"
+                              placeholder="Chia sẻ cảm nhận của bạn về cuốn sách..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-brand px-4"
+                        onclick="return document.getElementById('ratingValue').value > 0 || (alert('Vui lòng chọn số sao!'), false)">
+                    <i class="bi bi-send me-2"></i>Gửi đánh giá
+                </button>
+            </form>
+        </div>
+
+        <!-- Thông báo đã review rồi -->
+        <div sec:authorize="!hasRole('ADMIN') and isAuthenticated()"
+             th:if="${hasReviewed}"
+             class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i>Bạn đã gửi đánh giá cho cuốn sách này.
+        </div>
+
+        <!-- Mời đăng nhập để review -->
+        <div sec:authorize="isAnonymous()" class="alert alert-light border mb-4">
+            <i class="bi bi-person me-2"></i>
+            <a th:href="@{/login}" class="text-accent fw-medium">Đăng nhập</a>
+            để viết đánh giá của bạn.
+        </div>
+
+        <!-- Danh sách đánh giá đã duyệt -->
+        <div th:if="${!#lists.isEmpty(reviews)}">
+            <div th:each="r : ${reviews}" class="card border-0 shadow-sm p-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="fw-medium text-brand me-2"
+                              th:text="${r.user.fullName ?: r.user.username}"></span>
+                        <span th:each="i : ${#numbers.sequence(1, 5)}">
+                            <i th:class="${i <= r.rating ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'}"
+                               style="font-size:13px"></i>
+                        </span>
+                    </div>
+                    <span class="text-muted small"
+                          th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy')}"></span>
+                </div>
+                <p class="text-muted mb-0 small"
+                   style="line-height:1.7"
+                   th:text="${r.comment ?: '(Không có nội dung)'}"></p>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(reviews)}" class="text-center py-4 text-muted">
+            <i class="bi bi-chat-square-text" style="font-size:40px"></i>
+            <p class="mt-2 small">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+        </div>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
+
+<script>
+    let selectedRating = 0;
+    const labels = ['', 'Tệ', 'Chưa hay', 'Bình thường', 'Hay', 'Xuất sắc'];
+
+    function setRating(val) {
+        selectedRating = parseInt(val);
+        document.getElementById('ratingValue').value = selectedRating;
+        document.getElementById('ratingText').textContent = labels[selectedRating];
+        renderStars(selectedRating, true);
+    }
+
+    function hoverRating(val) {
+        renderStars(parseInt(val), false);
+    }
+
+    function resetHover() {
+        renderStars(selectedRating, true);
+    }
+
+    function renderStars(count, isFinal) {
+        document.querySelectorAll('.star-btn').forEach((star, idx) => {
+            star.className = idx < count ? 'bi bi-star-fill star-btn' : 'bi bi-star star-btn';
+            star.style.color = idx < count ? '#ffc107' : '#dee2e6';
+        });
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        document.querySelectorAll(".btn-add-cart").forEach(btn => {
+
+            btn.addEventListener("click", function () {
+
+                const bookId = this.getAttribute("data-id");
+
+                fetch("/cart/add/" + bookId, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("Add cart:", data);
+                    })
+                    .catch(err => console.error(err));
+
+            });
+        });
+
+    });
+</script>
 </body>
 </html>

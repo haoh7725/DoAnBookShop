@@ -4,6 +4,8 @@
 <head th:replace="~{fragments/layout :: head('Danh sách sách')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
 <main class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -244,6 +246,36 @@
             .then(html => { body.innerHTML = html; })
             .catch(() => { body.innerHTML = '<p class="text-center text-muted py-4">Không thể tải thông tin sách.</p>'; });
     }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        document.querySelectorAll(".btn-add-cart").forEach(btn => {
+
+            btn.addEventListener("click", function () {
+
+                const bookId = this.getAttribute("data-id");
+
+                fetch("/cart/add/" + bookId, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("Add cart:", data);
+                    })
+                    .catch(err => console.error(err));
+
+            });
+        });
+
+    });
 </script>
 </body>
 </html>
